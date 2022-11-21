@@ -128,6 +128,15 @@ As for Butterfly \& Moth data, we linearly interpolate the 6th and 29th coordina
 \end{figure}
 
 \subsection{Discussion: Model Comparison}
+CAEs are autoencoders that apply the CNN architecture to compress the input images into a lower dimensional latent space and reconstruct the images from the learned latent space. Using an encoder/decoder structure enables CAEs to capture as much information about data as possible, even without labels. However, CAEs are deterministic. That means there is a one-to-one relationship between the input and output in CAEs. Therefore, CAEs can't generate new samples. Based on the architecture of the traditional autoencoder, VAEs introduce randomness into the model by assuming a prior distribution of latent space and infering the posterior distribution during the training process. In most cases, we choose the standard Gaussian distribution as prior distribution, which helps the latent space to be complete and continuous. The probabilistic nature allows VAEs to generate new images from random noise.\par
+GANs are designed for generating new samples. Instead of inferring the distribution of latent space, it samples from random noise and learns a transformation to imitate the real distribution of data. Gans improve the quality of imitations by training a discriminator to distinguish between generated samples and real samples.\par
+In summary, VAEs samples from a prior distribution and infers the real distribution of latent space, while GANs samples from random noise and learn the data transformation by encouraging the competition between generator and discriminator.
 
 \section*{Contributions}
+\begin{tabular}{ll}
+    \textbf{Name} & \textbf{Contribution}\\
+    Chenyu Shi & Task 2 code, Task 2 report.\\
+    Shupei Li & Task 3 code, Task 3 report, Task2 code.\\
+    Shuang Fan & \\
+\end{tabular}
 \end{document}
