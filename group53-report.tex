@@ -44,7 +44,7 @@ The regression model structure is shown in Figure \ref{fig:regression}. And its 
 	\end{minipage}
 	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
 		\centering
-		\includegraphics[width=\textwidth]{regression.png}
+		\includegraphics[width=\textwidth]{multi-head.png}
 		\caption{Multi-head model}
 		\label{fig:multi-head}
 	\end{minipage}
@@ -61,14 +61,49 @@ The regression model structure is shown in Figure \ref{fig:regression}. And its 
 		Classification(24 classes) & 0.6206 \\
 		Classification(72 classes) & 0.9517 \\
 		Classification(720 classes) & 3.0309 \\
-		Multi-head & 0.8634 \\
+		Multi-head & 0.6161 \\
+		Label transformation & 0.3447 \\
+		Label transformation(fine-tuned) & 0.1921 \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 \subsection{Classification}
-The regression model structure is shown in Figure \ref{fig:classification}. And its corresponding results are shown in Table \ref{tab:performance}. Thereinto, model structures of 24 classes, 72 classes and 720 classes are only different in last output layers. Because this is a multi-class classification task, we use cross entropy as loss function adn Adam as optimizer. And we can see, although classification model uses much fewer trainable parameters, the final result for 24 classes is better than regression model with a performance of 0.6206 hours(about 37.2 minutes). However, when we increase the number of categories, the performance of model become poorer. And the model of 720 classes even didn't coverge and has a very high common sense loss. That's because this kind of label representation also has its problems. The first problem is that this label representation cannot measure "how much difference two categories have". For example, in 24 classes model, 0:01 and 0:31 are in different categories, and 0:01 and 6:00 are also in different categories. Although the common sense loss between 0:01 and 6:00 are much larger than that between 0:01 and 0:31, the cross entropy loss function in classfication task will give them same loss values. The second big problem is that it's hard for us to balance  sampling interval and samples number. If we have large sampling interval along with a large samples number, the model can get well trained because there are sufficient training data in each class, but the common sense loss within each class becomes rather high. For example, in 24 classes model, 0:01 and 0:29 will be classified into same class even they are almost half an hour apart. On the contrary, if we have small sampling interval along with a small samples number, the common sense loss within each class becomes rather small, but the model itself cannot be well trained due to lack of training data for each class. For example, in 720 classes model, each class will only have 25 pictures for training, validation and test set. That's not a sufficient number for training CNN in a regular way.
+The regression model structure is shown in Figure \ref{fig:classification}. And its corresponding results are shown in Table \ref{tab:performance}. Thereinto, model structures of 24 classes, 72 classes and 720 classes are only different in last output layers. Because this is a multi-class classification task, we use cross entropy as loss function and Adam as optimizer. And we can see, although classification model uses much fewer trainable parameters(for 24 classes, 287064 trainable parameters), the final result for 24 classes is better than regression model with a performance of 0.6206 hours(about 37.2 minutes). However, when we increase the number of categories, the performance of model become poorer. And the model of 720 classes even didn't coverge and has a very high common sense loss. That's because this kind of label representation also has its problems. The first problem is that this label representation cannot measure "how much difference two categories have". For example, in 24 classes model, 0:01 and 0:31 are in different categories, and 0:01 and 6:00 are also in different categories. Although the common sense loss between 0:01 and 6:00 are much larger than that between 0:01 and 0:31, the cross entropy loss function in classfication task will give them same loss values. The second big problem is that it's hard for us to balance  sampling interval and samples number. If we have large sampling interval along with a large samples number, the model can get well trained because there are sufficient training data in each class, but the common sense loss within each class becomes rather high. For example, in 24 classes model, 0:01 and 0:29 will be classified into same class even they are almost half an hour apart. On the contrary, if we have small sampling interval along with a small samples number, the common sense loss within each class becomes rather small, but the model itself cannot be well trained due to lack of training data for each class. For example, in 720 classes model, each class will only have 25 pictures for training, validation and test set. That's not a sufficient number for training CNN in a regular way.
+
+\subsection{Multi-head}
+The regression model structure is shown in Figure \ref{fig:multi-head}. And its corresponding results are shown in Table \ref{tab:performance}. We use two heads output, one for predicting hours and another for predicting minutes, and we consider these two heads output as multiclass classification task and regression task respecitively. For classification task of predicting hours, we consider 12 hours as 12 different categories and use cross entropy as loss function. For regression task of predciting minutes, we use MSE as loss function. And this model uses 548,557 tranable parameters and finnaly obtains common sense loss of 0.6161 hours(about 37.0 minutes), which is the best performance up to know comparing to regression and classification models. The performance improvement is due to that using multi-head model can take adavantage of different features of the target labels. For example, for target of predicting hours, it's a good way to consider it as a classification task because there are only 12 classes and each class can have adequate training samples. On the contrary, for target of predicting minutes target, it's a good way to consider it as a regression task because the target values are in a rather large interval(0-59). It's flexible to use multi-head model to combine these features using different losses and targets, so the final performance can be improved. Besides, there's an important thing needed to pay attention to. That is for regression task, we should scale and normalize predicting target from interval (0-59). For example, divide 60 for each minute target. Otherwise, the cross entropy loss for hours and the MSE loss for minutes will have great difference in quantity, which has negative impact on training neural networks. Howerver, although multi-head has gained performance improvement, the problems of labels of classification and regression tasks are still there. Therefore, in the next subsection, we will use Label transformation to improve model and get much better results.
 
 
+\subsection{Label transformation}
+According to the performance of previous model, we can know that directly using hours and minutes as target cannot capture common sense loss, which has negative influence on the model performance. Therefore, we use sine and cosine functions to represent the angles on the unit circle to improve the model performance.
+
+It's easy to think that the angle of hour hand $\theta$ contains entire information about the clock. Then we apply sin function on that angle $\theta$. Now let's see the difference of previous example, 0:05 and 11:55. It's simple to compute the corresponding angles of 0:05 and 11:55, which are 0.0436 rads and 6.240 rads. And we could see, sin(0.0436) and cos(6.240) equals to 0.0436 and -0.0436 respectively, which are very close to each other due to the property of periodic function. It's exactly what we want for our labels.
+
+But there is another problem. For sin function, there are many angles, or clock time, are projected to a smae value. For example, 1:00($\frac{\pi}{6}$) and 5:00($\frac{5\pi}{6}$) are both projected to 0.5. Luckily, we could apply cos function at the same time to distinguish these angles. Therefore, we should transform the original label [hour,minute] to [sin($\theta$),cos($\theta$)]. So the output nodes should be 2, one for sin, and another for cos. We know sin and cos function both have a range of [-1,1]. And we know tanh activation function has the same range. Therefore, applying a tanh activation function in the output layer would be perfect. And we consider it as a regression problem as well.
+\begin{figure}[!h]
+	\centering
+	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+		\centering
+		\includegraphics[width=\textwidth]{label_trans.png}
+		\caption{Label transformation model}
+		\label{fig:labeltrans}
+	\end{minipage}
+	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+		\centering
+		\includegraphics[width=\textwidth]{classification.png}
+		\caption{Final model}
+		\label{fig:final}
+	\end{minipage}
+\end{figure}
+
+This label transformation regression model works well. The specific model structure and model performance are shown in figure \ref{fig:labeltrans} and table \ref{tab:performance} respectively. It only takes 285634 trainalbe parameters and obtain common sense loss of 0.3447 hours(about 20.7 minutes), which is the best up to now. In the next section, we will fine tune this model using the knowledge gained by previous part and improve its performance as the final model.
+
+\subsection{Final model}
+
+The final model structure and its performance are shown in figure \ref{fig:final} and \ref{tab:performance} respectively. Comparing to the model in section 2.4, we made several adjustments. Firstly, we use leakyrelu instead of relu as activation function in all hidden layers to avoid vanishing gradient problem. In addition, we apply L2 regularization for each layer that contains trainable parameters to avoid overfitting. Besides, a dropout layer is applied after flatten and a normalization layer is applied after the first dense layer. Finally, we set checkpoints to store the model with best performance on validation set, and use a smaller learning rate and large total epochs.
+
+The final performance obtained by this model is common sense loss of 0.1921 hours(about 11.5 minutes), which is the best one among all, especially comparing to the first three models. That's mainly because periodic functions sin and cos can exactly capture the common sense loss of clock time. To conclude, from this experiments we can see, it's of much importance to design a good target label for neural networks to train and obtain a rather good final performance.
+Also, we could see a fine-tune can improve model's performance as well.
 \section*{Task 3}
 \setcounter{section}{3}
 \subsection{Datasets}
@@ -178,7 +213,7 @@ In summary, VAEs sample from a prior distribution and infer the real distributio
 \section*{Contributions}
 \begin{tabular}{ll}
     \textbf{Name} & \textbf{Contribution}\\
-    Chenyu Shi & Task 2 code, Task 2 report.\\
+    Chenyu Shi & Task 1 code, Task 2 code, Task 2 report.\\
     Shupei Li & Task 3 code, Task 3 report, Task2 code.\\
     Shuang Fan & \\
 \end{tabular}
