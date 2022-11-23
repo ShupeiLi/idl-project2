@@ -53,7 +53,7 @@ The regression model structure is shown in Figure \ref{fig:regression}. And its 
 	\caption{Results and Algorithm Comparison}
 	\label{tab:performance}
 	\centering
-	\begin{tabular}{cc}
+	\begin{tabular}{ll}
 		\toprule
 		\textbf{Model} & \textbf{Common Sense Loss(hours)} \\
 		\midrule
@@ -67,6 +67,7 @@ The regression model structure is shown in Figure \ref{fig:regression}. And its 
 		\bottomrule
 	\end{tabular}
 \end{table}
+
 \subsection{Classification}
 The regression model structure is shown in Figure \ref{fig:classification}. And its corresponding results are shown in Table \ref{tab:performance}. Thereinto, model structures of 24 classes, 72 classes and 720 classes are only different in last output layers. Because this is a multi-class classification task, we use cross entropy as loss function and Adam as optimizer. And we can see, although classification model uses much fewer trainable parameters(for 24 classes, 287064 trainable parameters), the final result for 24 classes is better than regression model with a performance of 0.6206 hours(about 37.2 minutes). However, when we increase the number of categories, the performance of model become poorer. And the model of 720 classes even didn't coverge and has a very high common sense loss. That's because this kind of label representation also has its problems. The first problem is that this label representation cannot measure "how much difference two categories have". For example, in 24 classes model, 0:01 and 0:31 are in different categories, and 0:01 and 6:00 are also in different categories. Although the common sense loss between 0:01 and 6:00 are much larger than that between 0:01 and 0:31, the cross entropy loss function in classfication task will give them same loss values. The second big problem is that it's hard for us to balance  sampling interval and samples number. If we have large sampling interval along with a large samples number, the model can get well trained because there are sufficient training data in each class, but the common sense loss within each class becomes rather high. For example, in 24 classes model, 0:01 and 0:29 will be classified into same class even they are almost half an hour apart. On the contrary, if we have small sampling interval along with a small samples number, the common sense loss within each class becomes rather small, but the model itself cannot be well trained due to lack of training data for each class. For example, in 720 classes model, each class will only have 25 pictures for training, validation and test set. That's not a sufficient number for training CNN in a regular way.
 
@@ -106,6 +107,7 @@ The final performance obtained by this model is common sense loss of 0.1921 hour
 Also, we could see a fine-tune can improve model's performance as well.
 \section*{Task 3}
 \setcounter{section}{3}
+\setcounter{subsection}{0}
 \subsection{Datasets}
 We use two datasets in Task 3. Firstly, we explore the performance of different model architectures and the effects of different parameters with MNIST data. After that, we leverage the power of generative models on Butterfly \& Moth data. \par
 We directly call Tensorflow API to download the MNIST dataset. However, the original dataset is also available on \url{https://deepai.org/dataset/mnist}. MNIST dataset contains 70,000 grayscale images (28 $\times$ 28 $\times$ 1), whose content is handwritten numbers. \par
@@ -214,7 +216,7 @@ In summary, VAEs sample from a prior distribution and infer the real distributio
 \begin{tabular}{ll}
     \textbf{Name} & \textbf{Contribution}\\
     Chenyu Shi & Task 1 code, Task 2 code, Task 2 report.\\
-    Shupei Li & Task 3 code, Task 3 report, Task2 code.\\
-    Shuang Fan & \\
+    Shupei Li & Task 1 code, Task 1 report, Task2 code, Task 3 code, Task 3 report.\\
+    Shuang Fan & Task 1 code, Task 1 report.\\
 \end{tabular}
 \end{document}
