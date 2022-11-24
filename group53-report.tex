@@ -45,7 +45,7 @@ We reproduce the results of \texttt{mnist\_mlp.py} and \texttt{mnist\_cnn.py} fo
 Based on the experience we learned from Keras official documentation, we set the model architectures provided in the textbook as benchmarks and try different hyperparameter settings on Fashion MNIST and CIFAR-10 datasets. It is worth noting that we set the number of epoches to 50 and use early stopping technique during the hyperparameter tuning process. We also add model checkpoints to save the weights of the best model and load the weights when evaluating the performance. The combination of early stopping and model checkpoints dynamically balances between training costs and model performance. The following describes our experiments in detail.
 
 \subsubsection{Fashion MNIST}
-\textbf{MLP}. Firstly, we adjust the number of layers as well as hidden layer units to determine the best model architecture. Table \ref{tab:1-ma-mnist} summarizes the results of different model settings. Figure \ref{fig:1-mlp-arch} illustrates the changing trends of validation accuracy during the training.
+\textbf{MLP}. Firstly, we adjust the number of layers as well as hidden layer units to determine the best model architecture. Table \ref{tab:1-ma-mnist} summarizes the results of different model settings. And Figure \ref{fig:1-mlp-arch} illustrates the changing trends of validation accuracy during the training.
 \begin{table}[!ht]
     \centering
     \caption{MLP Model Architectures}
@@ -93,12 +93,12 @@ According to the results,  MLP model with two layers and 128 units is the best m
         Optimizer & optimizer & RMSprop, Adam (learning_rate=0.001), Adam (learning_rate=0.01)\\
         Regularization & kernel regularizer & None, L1, L2\\
                        & Dropout layer & With / Without one dropout layer after the hidden layer.\\
-                       & dropout rate & 0.1, 0.3, 0.5 (The dropout rate when adding the Dropout layer)\\
+                       & dropout rate & 0.1, 0.3, 0.5 (The dropout rate when adding the Dropout layers)\\
         \bottomrule
     \end{tabular}
 \end{table}
 \par
-We begin with models without Dropout layers, considering the relatively large parameter space. Grid search method is used to optimize hyperparameters, which leads to 81 different settings. The detailed results can be found in the jupyter notebook. We omit results here due to the limited space. The best model without dropout layers has the setting: \{kernel initializer: GlorotUniform, layer activation: sigmoid, optimizer: RMSprop, kernel regularizer: None\}. Based on that, we add dropout layers to the model with different dropout rates. Table \ref{tab:1-top3-mlp} lists the top three MLP model settings. The layer activation, kernel initializer, and optimizer of these settings are relu, GlorotUniform, RMSprop respectively. All settings don't use the kernel regularizer.
+We begin with models without Dropout layers, considering the relatively large parameter space. Grid search method is used to optimize hyperparameters, which leads to 81 different settings. The detailed results can be found in the jupyter notebook. And we omit results here due to the limited space. The best model without dropout layers has the setting: \{kernel initializer: GlorotUniform, layer activation: sigmoid, optimizer: RMSprop, kernel regularizer: None\}. Based on that, we add dropout layers to the model with different dropout rates. Table \ref{tab:1-top3-mlp} lists the top three MLP model settings. The layer activation, kernel initializer, and optimizer of these settings are relu, GlorotUniform, RMSprop respectively. All settings don't use the kernel regularizer.
 \begin{table}[!ht]
     \centering
     \caption{Top Three MLP Model Settings}
@@ -221,7 +221,7 @@ We set the models provided in the textbook as baselines for CIFAR-10 data. To te
 According to Table \ref{tab:1-cifar}, the performance gains don't translate to a different dataset.
 
 \subsection{Discussion}
-Hyperparameter tuning plays an important role in improving model performance. Deep learning mdoels usually have many hyperparameters. Therefore, we need to use a systematic approach to optimizing hyperparameters. For example, we can apply grid search technique on the parameter space. If the model architecture is very complicated, we may need to use more advanced tuning frameworks, such as Ray Tune and Hyperopt. When exploring the best settings, it is helpful to set callbacks in Keras models to control the training process dynamically. It is worth noting that the best hyperparameter setting on one dataset generally doesn't obtain the best performance on another dataset. That means we should perform hyperparameter tuning on a new dataset even the model structure remains the same.
+Hyperparameter tuning plays an important role in improving model performance. Deep learning mdoels usually have many hyperparameters. Therefore, we need to use a systematic approach to optimizing hyperparameters. For example, we can apply grid search technique on the parameter space. If the model architecture is very complicated, we may need to use more advanced tuning frameworks, such as Ray Tune, Hyperopt, etc. When exploring the best settings, it is helpful to set callbacks in Keras models to control the training process dynamically. It is worth noting that the best hyperparameter setting on one dataset generally doesn't obtain the best performance on another dataset. That means we should perform hyperparameter tuning on a new dataset even the model structure remains the same.
 
 \section*{Task 2}
 \setcounter{section}{2}
@@ -306,11 +306,12 @@ This label transformation regression model works well. The specific model struct
 The final model structure and its performance are shown in figure \ref{fig:final} and \ref{tab:performance} respectively. Comparing to the model in section 2.4, we made several adjustments. Firstly, we use leakyrelu instead of relu as activation function in all hidden layers to avoid vanishing gradient problem. In addition, we apply L2 regularization for each layer that contains trainable parameters to avoid overfitting. Besides, a dropout layer is applied after flatten and a normalization layer is applied after the first dense layer. Finally, we set checkpoints to store the model with best performance on validation set, and use a smaller learning rate and larger total training epochs.
 
 The final performance obtained by this model achieves 0.1921 hours(about 11.5 minutes) common sense loss, which is the best one among all models, especially compared to the first three models. That's mainly because periodic functions sin and cos can exactly capture the common sense loss of the clock time. To conclude, from this experiments we can see, it's of much importance to design a good target label for neural networks to train and obtain a rather good final performance. Also, we could see a fine-tune can improve model's performance as well.
+
 \section*{Task 3}
 \setcounter{section}{3}
 \setcounter{subsection}{0}
 \subsection{Datasets}
-We use two datasets in Task 3. Firstly, we explore the performance of different model architectures and the effects of different parameters with MNIST data. After that, we leverage the power of generative models on Butterfly \& Moth data. \par
+We use two datasets in Task 3. Firstly, we explore the performance of different model architectures and the effects of different parameter settings with MNIST data. After that, we leverage the power of generative models on Butterfly \& Moth data. \par
 We directly call Tensorflow API to download the MNIST dataset. However, the original dataset is also available on \url{https://deepai.org/dataset/mnist}. MNIST dataset contains 70,000 grayscale images (28 $\times$ 28 $\times$ 1), whose content is handwritten numbers. \par
 Butterfly \& Moth is an open source dataset on Kaggle. There are 13,639 RGB images (224 $\times$ 224 $\times$ 3) composed of 100 butterfly or moth species. Link of the dataset is \url{https://www.kaggle.com/datasets/gpiosenka/butterfly-images40-species?resource=download}.
 
