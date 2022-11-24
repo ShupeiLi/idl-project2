@@ -33,7 +33,7 @@ We reproduce the results of \texttt{mnist\_mlp.py} and \texttt{mnist\_cnn.py} fo
     \label{tab:1-offer}
     \begin{tabular}{llllll}
         \toprule
-        \textbf{Model} & \textbf{\#Epoch} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
+        \textbf{Model} & \textbf{\#epoch} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
         \midrule
         MLP & 20 & 0.1206 & 0.9837\\
         CNN & 12 & 0.4189 & 0.8891\\
@@ -98,7 +98,7 @@ According to the results,  MLP model with two layers and 128 units is the best m
     \end{tabular}
 \end{table}
 \par
-We begin with models without Dropout layers, considering the relatively large parameter space. Grid search method is used to optimize hyperparameters, which leads to 81 different settings. The detailed results can be found in the jupyter notebook. And we omit results here due to the limited space. The best model without Dropout layers has the setting: \{kernel initializer: GlorotUniform, layer activation: sigmoid, optimizer: RMSprop, kernel regularizer: None\}. Based on that, we add dropout layers to the model with different dropout rates. Table \ref{tab:1-top3-mlp} lists the top three MLP model settings. The layer activation, kernel initializer, and optimizer of these settings are relu, GlorotUniform, RMSprop respectively. All settings don't use the kernel regularizer.
+We begin with models without Dropout layers, considering the relatively large parameter space. Grid search method is used to optimize hyperparameters, which leads to 81 different settings. The detailed results can be found in the jupyter notebook. And we omit results here due to the limited space. The best model without Dropout layers has the setting: \{kernel initializer: GlorotUniform, layer activation: sigmoid, optimizer: RMSprop, kernel regularizer: None\}. Based on that, we add Dropout layers to the model with different dropout rates. Table \ref{tab:1-top3-mlp} lists the top three MLP model settings. The layer activation, kernel initializer, and optimizer of these settings are relu, GlorotUniform, RMSprop respectively. All settings don't use the kernel regularizer.
 \begin{table}[!ht]
     \centering
     \caption{Top Three MLP Model Settings}
