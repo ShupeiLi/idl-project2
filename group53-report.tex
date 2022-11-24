@@ -23,29 +23,230 @@
 \maketitle % creates title using information in preamble (title, author, date)
 
 \section*{Task 1}
+\setcounter{section}{1}
+\setcounter{subsection}{0}
+\subsection{Official Repository Examples}
+We reproduce the results of \texttt{mnist\_mlp.py} and \texttt{mnist\_cnn.py} for the MNIST dataset. Without adjusting model architectures, Table \ref{tab:1-offer} reports our experimental results.
+\begin{table}[!ht]
+    \centering
+    \caption{MNIST: Official Repository Examples}
+    \label{tab:1-offer}
+    \begin{tabular}{llllll}
+        \toprule
+        \textbf{Model} & \textbf{\#Epoch} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
+        \midrule
+        MLP & 20 & 0.1206 & 0.9837\\
+        CNN & 12 & 0.4189 & 0.8891\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Exploratory Experiments}
+Based on the experience we learned from Keras official documentation, we set the model architectures provided in the textbook as benchmarks and try different hyperparameter settings on Fashion MNIST and CIFAR-10 datasets. It is worth noting that we set the number of epoches to 50 and use early stopping technique during the hyperparameter tuning process. We also add model checkpoints to save the weights of the best model and load the weights when evaluating the performance. The combination of early stopping and model checkpoints dynamically balances between training costs and model performance. The following describes our experiments in detail.
+
+\subsubsection{Fashion MNIST}
+\textbf{MLP}. Firstly, we adjust the number of layers as well as hidden layer units to determine the best model architecture. Table \ref{tab:1-ma-mnist} summarizes the results of different model settings. Figure \ref{fig:1-mlp-arch} illustrates the changing trends of validation accuracy during the training.
+\begin{table}[!ht]
+    \centering
+    \caption{MLP Model Architectures}
+    \label{tab:1-ma-mnist}
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Parameter} & \textbf{Value} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
+        \midrule
+        \#layers & 2 & 0.3679 & \textbf{0.8911}\\
+                 & 3 & 0.3622 & 0.8843\\
+                 & 4 & 0.3583 & 0.8842\\
+        \midrule
+        \#units & 128 & 0.3659 & \textbf{0.8876}\\
+                & 256 & 0.3302 & 0.8847\\
+                & 512 & 0.3539 & 0.8858\\
+        \midrule
+        Baseline & - & 0.6186 & 0.8863\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\begin{figure}[!ht]
+    \centering
+    \subfloat[\#layers]{%
+        \includegraphics[width=6cm]{./fig/1-layer.png}%
+        }%
+        \hspace{1cm}
+    \subfloat[\#units]{%
+        \includegraphics[width=6cm]{./fig/1-unit.png}%
+        }%
+    \caption{MLP: Validation Accuracy}
+    \label{fig:1-mlp-arch}
+\end{figure}
+\par
+According to the results,  MLP model with two layers and 128 units is the best model. Therefore, we adopt this architecture when exploring other hyperparameters. We follow the hints in the assignment description and experiment with initializations, activations, optimizers, and regulariztions. Table \ref{tab:1-hy-mnist} summarizes the options we have tested.
+\begin{table}[!ht]
+    \centering
+    \caption{MLP Hyperparameter Tuning}
+    \label{tab:1-hy-mnist}
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Category} & \textbf{Parameter} & \textbf{Values}\\
+        \midrule
+        Initialization & kernel initializer & RandomNormal, GlorotNormal, GlorotUniform\\
+        Activation & layer activation & relu, sigmoid, tanh\\
+        Optimizer & optimizer & RMSprop, Adam (learning_rate=0.001), Adam (learning_rate=0.01)\\
+        Regularization & kernel regularizer & None, L1, L2\\
+                       & Dropout layer & With / Without one dropout layer after the hidden layer.\\
+                       & dropout rate & 0.1, 0.3, 0.5 (The dropout rate when adding the Dropout layer)\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\par
+We begin with models without Dropout layers, considering the relatively large parameter space. Grid search method is used to optimize hyperparameters, which leads to 81 different settings. The detailed results can be found in the jupyter notebook. We omit results here due to the limited space. The best model without dropout layers has the setting: \{kernel initializer: GlorotUniform, layer activation: sigmoid, optimizer: RMSprop, kernel regularizer: None\}. Based on that, we add dropout layers to the model with different dropout rates. Table \ref{tab:1-top3-mlp} lists the top three MLP model settings. The layer activation, kernel initializer, and optimizer of these settings are relu, GlorotUniform, RMSprop respectively. All settings don't use the kernel regularizer.
+\begin{table}[!ht]
+    \centering
+    \caption{Top Three MLP Model Settings}
+    \label{tab:1-top3-mlp}
+    \begin{tabular}{lllll}
+        \toprule
+        \textbf{Model} & \textbf{\#layers} & \textbf{\#units} & \textbf{Dropout Layer} & \textbf{Test Accuracy}\\
+        \midrule
+        Top 1 & 2 & (512, 10) & Yes. rate=0.3. & 0.8919\\
+        Top 2 & 2 & (512, 10) & No. & 0.8911\\
+        Top 3 & 2 & (128, 10) & Yes. rate=0.1. & 0.8891\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\par
+\noindent\textbf{CNN}. We follow the similar workflow as MLP experiments to explore the best CNN model. First of all, we try to change the number of Conv2D layers and convolutional filters. Table \ref{tab:1-ma-cnn} and Figure \ref{fig:1-cnn-arch} (a)(b) report experimental results of model architecture modification.
+\begin{table}[!ht]
+    \centering
+    \caption{CNN Model Architectures}
+    \label{tab:1-ma-cnn}
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Parameter} & \textbf{Value} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
+        \midrule
+        \#Conv2D layers & 5 & 0.2642 & \textbf{0.9109}\\
+                        & 6 (Add layers) & 0.3105 & 0.9060\\
+                        & 3 (Remove layers) & 0.3360 & 0.9101\\
+        \midrule
+        \#filters & (64, 128, 128, 256, 256) & 0.2767 & \textbf{0.9094}\\
+                  & (32, 64, 64, 128, 128) & 0.2916 & \textbf{0.9094}\\
+                  & (128, 256, 256, 512, 512) & 0.2907 & 0.9042\\
+        \midrule
+        Baseline & - & 0.3330 & 0.8909\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\begin{figure}[!ht]
+    \centering
+    \subfloat[\#Conv2D layers]{%
+        \includegraphics[width=6cm]{./fig/1-cnn-layer.png}%
+        }%
+        \hspace{1cm}
+    \subfloat[\#filters]{%
+        \includegraphics[width=6cm]{./fig/1-cnn-unit.png}%
+        }%
+        \\
+    \subfloat[dropout rate]{%
+        \includegraphics[width=6cm]{./fig/1-cnn-op.png}%
+        }%
+        \hspace{1cm}
+    \subfloat[optimizer]{%
+        \includegraphics[width=6cm]{./fig/1-cnn-op2.png}%
+        }%
+    \caption{CNN: Validation Accuracy}
+    \label{fig:1-cnn-arch}
+\end{figure}
+\par
+The best model architecture is adding five Conv2D layers with (32, 64, 64, 128, 128) filter setting. Due to the high training cost of CNN, we reduce the parameter space compared to MLP. To be specific, we experiment with different dropout rates and optimizers. Table \ref{tab:1-cnn-hy} and Figure \ref{fig:1-cnn-arch} (c)(d) show the results.
+\begin{table}[!ht]
+    \centering
+    \caption{CNN Hyperparameter Tuning}
+    \label{tab:1-cnn-hy}
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Parameter} & \textbf{Value} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
+        \midrule
+        dropout rate & 0.1 & 0.3279 & \textbf{0.9183}\\
+                     & 0.3 & 0.3613 & 0.9175\\
+                     & 0.5 & 0.3713 & 0.9105\\
+        \midrule
+        optimizer & RMSprop & 0.2768 & 0.9111\\
+                  & Adam (learning rate=0.001) & 0.4071 & \textbf{0.9116}\\
+                  & Adam (learning rate=0.01) & 0.3658 & 0.8732\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\par 
+Table \ref{tab:1-top3-cnn} lists the top three CNN model settings. All settings use the architecture with five Conv2D layers and (32, 64, 64, 128, 128) filter setting.
+
+\begin{table}[!ht]
+    \centering
+    \caption{Top Three CNN Model Settings}
+    \label{tab:1-top3-cnn}
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Model} & \textbf{dropout rate} & \textbf{optimizer} & \textbf{Test Accuracy}\\
+        \midrule
+        Top 1 & 0.1 & RMSprop & 0.9183\\
+        Top 2 & 0.1 & Adam (learning rate=0.001) & 0.9116\\
+        Top 3 & 0.5 & RMSprop & 0.9109\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{CIFAR-10}
+We set the models provided in the textbook as baselines for CIFAR-10 data. To test whether performance gains can be translated, we directly use MLP settings in Table \ref{tab:1-top3-mlp} and CNN settings in Table \ref{tab:1-top3-cnn} on CIFAR-10. Besides, we repeat the hyperparameter optimization process to find other possibly better hyperparameter settings. The best MLP new settings are: \{\#layers: 4, \#units: (512, 128, 32, 10), layer activation: relu, kernel initializer: GlorotUniform, kernel regularizer: None, Dropout layers: Yes. rates=(0.1, 0.1, 0.1)\}. And the best CNN new settings are: \{\#Conv2D layers: 5, \#filters: (64, 128, 128, 256, 256), dropout rate: (0.1, 0.1), optimizer: Adam (learning rate=0.001) \}. Table \ref{tab:1-cifar} summarizes the results of our experiments on CIFAR-10.
+\begin{table}[!ht]
+    \centering
+    \caption{CIFAR-10: Performance of Different Settings}
+    \label{tab:1-cifar}
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Category} & \textbf{Model} & \textbf{Test Loss} & \textbf{Test Accuracy}\\
+        \midrule
+        MLP & Baseline & 1.4616 & 0.4977\\
+            & Top 1 in Fashion MNIST & 1.5321 & 0.4559\\
+            & Top 2 in Fashion MNIST & 1.4960 & 0.4735\\
+            & Top 3 in Fashion MNIST & 1.5921 & 0.4304\\
+            & MLP Best New Settings & 1.4300 & \textbf{0.4985}\\
+        \midrule
+        CNN & Baseline & 1.5516 & 0.6478\\
+            & Top 1 in Fashion MNIST & 0.9998 & 0.6969\\
+            & Top 2 in Fashion MNIST & 1.0246 & 0.7004\\
+            & Top 3 in Fashion MNIST & 0.9959 & 0.6802\\
+            & CNN Best New Settings & 1.1895 & \textbf{0.7024}\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\par
+According to Table \ref{tab:1-cifar}, the performance gains don't translate to a different dataset.
+
+\subsection{Discussion}
+Hyperparameter tuning plays an important role in improving model performance. Deep learning mdoels usually have many hyperparameters. Therefore, we need to use a systematic approach to optimizing hyperparameters. For example, we can apply grid search technique on the parameter space. If the model architecture is very complicated, we may need to use more advanced tuning frameworks, such as Ray Tune and Hyperopt. When exploring the best settings, it is helpful to set callbacks in Keras models to control the training process dynamically. It is worth noting that the best hyperparameter setting on one dataset generally doesn't obtain the best performance on another dataset. That means we should perform hyperparameter tuning on a new dataset even the model structure remains the same.
 
 \section*{Task 2}
 \setcounter{section}{2}
+\setcounter{subsection}{0}
 \subsection{Regression}
-The regression model structure is shown in Figure \ref{fig:regression}. And its corresponding results are shown in Table \ref{tab:performance}. Because this is a regression task, we use MSE as loss function and Adam as optimizer. This model takes 2207593 trainable parameers, which is relatively high comparing to other models in task2. However, the final common sense loss is still a little bit high, which is 0.7053 hour(about 42.3 minutes). This is mainly caused by the problem of this kind of labels. Representing time in this way doesn't obey common sense. For example, 11:55 will be represented as 11.917 while 0:05 will be represented as 0.0833. Even though in common sense, the difference between 11:55 and 0:05 is only 10 minutes, their reformulated labels 11.917 and 0.0833 have a very high MSE. Therefore, this regression model has a limitted final performance.
+The regression model structure is shown in Figure \ref{fig:regression}. And its corresponding results are shown in Table \ref{tab:performance}. Considering this is a regression task, we choose MSE as loss function and Adam as optimizer. This model includes 2,207,593 trainable parameters, which is relatively large compared to other models in Task 2. However, the final common sense loss is still slightly high, which is 0.7053 hours (about 42.3 minutes). This is mainly caused by the inconsistency between label representation and common sense definition. In other words, representing time in the form of original labels disobeys common sense. For example, 11:55 is represented as 11.917, while 0:05 is represented as 0.0833. Even though the difference between 11:55 and 0:05 is only 10 minutes in common sense, their original labels (11.917 and 0.0833) lead to a very high MSE. Therefore, the regression model has a limited final performance.
+
 \begin{figure}[!h]
 	\centering
-	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+	\begin{minipage}[t]{0.32\textwidth}%并排放两张图片，每张占页面的0.5，下同。
 		\centering
-		\includegraphics[width=\textwidth]{regression.png}
-		\caption{Regression model}
+		\includegraphics[width=0.8\textwidth, height=7cm]{./fig/reg_model.png}
+		\caption{Regression Model}
 		\label{fig:regression}
 	\end{minipage}
-	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+	\begin{minipage}[t]{0.32\textwidth}%并排放两张图片，每张占页面的0.5，下同。
 		\centering
-		\includegraphics[width=\textwidth]{classification.png}
-		\caption{Classification model}
+		\includegraphics[width=0.8\textwidth, height=7cm]{./fig/class_model.png}
+		\caption{Classification Model}
 		\label{fig:classification}
 	\end{minipage}
-	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+	\begin{minipage}[t]{0.32\textwidth}%并排放两张图片，每张占页面的0.5，下同。
 		\centering
-		\includegraphics[width=\textwidth]{multi-head.png}
-		\caption{Multi-head model}
+		\includegraphics[width=\textwidth, height=7cm]{./fig/multi_model.png}
+		\caption{Multi-head Model}
 		\label{fig:multi-head}
 	\end{minipage}
 \end{figure}
@@ -63,13 +264,14 @@ The regression model structure is shown in Figure \ref{fig:regression}. And its 
 		Classification(720 classes) & 3.0309 \\
 		Multi-head & 0.6161 \\
 		Label transformation & 0.3447 \\
-		Label transformation(fine-tuned) & 0.1921 \\
+        Label transformation(fine-tuned) & \textbf{0.1921} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
 \subsection{Classification}
-The regression model structure is shown in Figure \ref{fig:classification}. And its corresponding results are shown in Table \ref{tab:performance}. Thereinto, model structures of 24 classes, 72 classes and 720 classes are only different in last output layers. Because this is a multi-class classification task, we use cross entropy as loss function and Adam as optimizer. And we can see, although classification model uses much fewer trainable parameters(for 24 classes, 287064 trainable parameters), the final result for 24 classes is better than regression model with a performance of 0.6206 hours(about 37.2 minutes). However, when we increase the number of categories, the performance of model become poorer. And the model of 720 classes even didn't coverge and has a very high common sense loss. That's because this kind of label representation also has its problems. The first problem is that this label representation cannot measure "how much difference two categories have". For example, in 24 classes model, 0:01 and 0:31 are in different categories, and 0:01 and 6:00 are also in different categories. Although the common sense loss between 0:01 and 6:00 are much larger than that between 0:01 and 0:31, the cross entropy loss function in classfication task will give them same loss values. The second big problem is that it's hard for us to balance  sampling interval and samples number. If we have large sampling interval along with a large samples number, the model can get well trained because there are sufficient training data in each class, but the common sense loss within each class becomes rather high. For example, in 24 classes model, 0:01 and 0:29 will be classified into same class even they are almost half an hour apart. On the contrary, if we have small sampling interval along with a small samples number, the common sense loss within each class becomes rather small, but the model itself cannot be well trained due to lack of training data for each class. For example, in 720 classes model, each class will only have 25 pictures for training, validation and test set. That's not a sufficient number for training CNN in a regular way.
+
+Figure \ref{fig:classification} illustrates the architecture of classification model. Table \ref{tab:performance} reports the corresponding results. We experiment with 24, 72, and 720 classes in the classification task, where models are only different in the last output layer. We use the cross entropy loss function and the Adam optimizer, which are the common choices for multi-class classification task. Although the classification model has much fewer trainable parameters(287,064 trainable parameters for 24 classes), the performance of 24 classes model achieves 0.6206 hours (about 37.2 minutes), which is better than the regression model. However, the increase of the categories impairs model performance. In the case of 720 classes, the model even doesn't coverge and has a very high common sense loss. The reason is that using time intervals as class labels has many drawbacks. The first problem is that this kind of label representation can't measure the degree of difference between two categories. For example, 0:01 and 0:31 belong to different categories in 24 classes model. Meanwhile, 0:01 and 6:00 are also in different categories. Although the common sense loss between 0:01 and 6:00 is much larger than that between 0:01 and 0:31, the cross entropy loss function assigns the same loss values to these two cases. The second problem is that it is hard \#\#\#\#\#\# to balance  sampling interval and samples number. If we have large sampling interval along with a large samples number, the model can get well trained because there are sufficient training data in each class, but the common sense loss within each class becomes rather high. For example, in 24 classes model, 0:01 and 0:29 will be classified into same class even they are almost half an hour apart. On the contrary, if we have small sampling interval along with a small samples number, the common sense loss within each class becomes rather small, but the model itself cannot be well trained due to lack of training data for each class. For example, in 720 classes model, each class will only have 25 pictures for training, validation and test set. That's not a sufficient number for training CNN in a regular way.
 
 \subsection{Multi-head}
 The regression model structure is shown in Figure \ref{fig:multi-head}. And its corresponding results are shown in Table \ref{tab:performance}. We use two heads output, one for predicting hours and another for predicting minutes, and we consider these two heads output as multiclass classification task and regression task respecitively. For classification task of predicting hours, we consider 12 hours as 12 different categories and use cross entropy as loss function. For regression task of predciting minutes, we use MSE as loss function. And this model uses 548,557 tranable parameters and finnaly obtains common sense loss of 0.6161 hours(about 37.0 minutes), which is the best performance up to know comparing to regression and classification models. The performance improvement is due to that using multi-head model can take adavantage of different features of the target labels. For example, for target of predicting hours, it's a good way to consider it as a classification task because there are only 12 classes and each class can have adequate training samples. On the contrary, for target of predicting minutes target, it's a good way to consider it as a regression task because the target values are in a rather large interval(0-59). It's flexible to use multi-head model to combine these features using different losses and targets, so the final performance can be improved. Besides, there's an important thing needed to pay attention to. That is for regression task, we should scale and normalize predicting target from interval (0-59). For example, divide 60 for each minute target. Otherwise, the cross entropy loss for hours and the MSE loss for minutes will have great difference in quantity, which has negative impact on training neural networks. Howerver, although multi-head has gained performance improvement, the problems of labels of classification and regression tasks are still there. Therefore, in the next subsection, we will use Label transformation to improve model and get much better results.
@@ -83,16 +285,17 @@ It's easy to think that the angle of hour hand $\theta$ contains entire informat
 But there is another problem. For sin function, there are many angles, or clock time, are projected to a smae value. For example, 1:00($\frac{\pi}{6}$) and 5:00($\frac{5\pi}{6}$) are both projected to 0.5. Luckily, we could apply cos function at the same time to distinguish these angles. Therefore, we should transform the original label [hour,minute] to [sin($\theta$),cos($\theta$)]. So the output nodes should be 2, one for sin, and another for cos. We know sin and cos function both have a range of [-1,1]. And we know tanh activation function has the same range. Therefore, applying a tanh activation function in the output layer would be perfect. And we consider it as a regression problem as well.
 \begin{figure}[!h]
 	\centering
-	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+	\begin{minipage}[t]{0.4\textwidth}%并排放两张图片，每张占页面的0.5，下同。
 		\centering
-		\includegraphics[width=\textwidth]{label_trans.png}
-		\caption{Label transformation model}
+		\includegraphics[width=0.8\textwidth, height=7cm]{./fig/label_model.png}
+		\caption{Label Transformation Model}
 		\label{fig:labeltrans}
 	\end{minipage}
-	\begin{minipage}[t]{0.3\textwidth}%并排放两张图片，每张占页面的0.5，下同。
+    \hspace{0.8cm}
+	\begin{minipage}[t]{0.4\textwidth}%并排放两张图片，每张占页面的0.5，下同。
 		\centering
-		\includegraphics[width=\textwidth]{classification.png}
-		\caption{Final model}
+		\includegraphics[width=0.8\textwidth, height=7cm]{./fig/final_model.png}
+		\caption{Final Model}
 		\label{fig:final}
 	\end{minipage}
 \end{figure}
@@ -138,12 +341,12 @@ We modify the model architecture to decrease the model complexity and match the 
 \begin{figure}[!ht]
     \centering
     \subfloat[Convolutional network]{%
-        \includegraphics[height=6cm, width=6cm]{./fig/conv.png}%
+        \includegraphics[height=4cm, width=4cm]{./fig/conv.png}%
         \label{fig:conv}%
         }%
-        \hspace{0.8cm}
+        \hspace{1.5cm}
     \subfloat[Deconvolutional network]{%
-        \includegraphics[height=6cm, width=7cm]{./fig/deconv.png}%
+        \includegraphics[height=4cm, width=5cm]{./fig/deconv.png}%
         \label{fig:deconv}%
         }%
     \caption{Model Structure}
